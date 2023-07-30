@@ -46,4 +46,77 @@ const app = express();
 
 app.use(bodyParser.json());
 
+let todoData = []; //In this array, we are storing all the data.
+
+app.get('/todos',(req, res)=>{
+  res.json(todoData);
+});
+
+app.post('/todos',(req, res)=>{
+  const randomID = Math.round(Math.random()*100000);
+  const newTodo = {
+    id : randomID,
+    title : req.body.title,
+    description : req.body.description
+  }
+  todoData.push(newTodo);
+  res.status(201).json({id: randomID});
+});
+
+app.get('/todos/:id',(req, res)=>{
+  const todoIndex = findIndex(todoData, parseInt(req.params.id));
+  if(todoIndex===-1){
+    res.status(404).send();
+  }else{
+    res.json(todoData[todoIndex]);
+  }
+});
+
+app.put('/todos/:id',(req, res)=>{
+  const todoIndex = findIndex(todoData, parseInt(req.params.id));
+  if(todoIndex===-1){
+    res.sendStatus(404);
+  }else{
+    todoData[todoIndex].title = req.body.title;
+    todoData[todoIndex].description = req.body.description;
+    res.sendStatus(200);
+  }
+});
+
+app.delete('/todos/:id',(req, res)=>{
+  const todoIndex = findIndex(todoData, parseInt(req.params.id));
+  if(todoIndex===-1){
+    res.status(404).send();
+  }else{
+    todoData = deleteTodo(todoData, todoIndex); 
+    res.sendStatus(200);
+  }
+})
+
+/*Here we have declared a middleware using this we are handling any other route,
+ for which route handler is not defined */
+app.use((req,res)=>{
+  res.sendStatus(404);
+})
+
+//Auxiliary / Helper Functions.
+function findIndex (arr, id){
+  for(let i=0;i<arr.length;i++){
+    if(arr[i].id===id){
+      return i;
+    }
+  }
+  return -1;
+}
+
+function deleteTodo(arr, index){
+  let newTodoData = [];
+  for(let i=0;i<arr.length;i++){
+    if(i!=index){
+      newTodoData.push(todoData[i]);
+    }
+  }
+  return newTodoData;
+}
+
 module.exports = app;
