@@ -4,7 +4,7 @@
 
   The expected API endpoints are defined below,
   1. GET /files - Returns a list of files present in `./files/` directory
-    Response: 200 OK with an array of file names in JSON format.
+    Response: 200 OK with an array of file names in JSON format, or 500 'Failed to retrive files' if the directory is not found or if any error occurs.
     Example: GET http://localhost:3000/files
 
   2. GET /file/:filename - Returns content of given file by name
@@ -12,7 +12,7 @@
      Response: 200 OK with the file content as the response body if found, or 404 Not Found if not found. Should return `File not found` as text if file is not found
      Example: GET http://localhost:3000/file/example.txt
 
-    - For any other route not defined in the server return 404
+    - For any other route not defined in the server return 404 and send 'Route not found' as text through body.
 
     Testing the server - run `npm run test-fileServer` command in terminal
  */
@@ -21,5 +21,30 @@ const fs = require('fs');
 const path = require('path');
 const app = express();
 
+
+app.get('/files',(req, res)=>{
+  fs.readdir(__dirname +'/files',(err, files)=>{
+    if(err){
+      res.status(500).json({error :'Failed to retrive files'});
+    }else{
+      res.json(files);
+    }
+  });
+})
+
+app.get('/file/:filename',(req, res)=>{
+  fs.readFile(__dirname+'/files/'+req.params.filename,'utf8',(err, data)=>{
+    if(err){
+      res.status(404).send("File not found");
+    }else{
+      res.send(data);
+    }
+  });
+});
+
+//(Middleware) here we are handling all the requests for which route handlers are not defined.
+app.use((req, res, next)=>{
+  res.status(404).send('Route not found');
+});
 
 module.exports = app;
